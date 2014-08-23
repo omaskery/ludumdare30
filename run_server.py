@@ -37,7 +37,7 @@ def main(**kwargs):
         exit_flag = SigintExitFlag()
 
     try:
-        settings = json.loads(open('settings.json', 'r').read())
+        settings = json.loads(open('data/settings.json', 'r').read())
     except IOError:
         settings = {
             'uuid': str(uuid.uuid4())
@@ -54,6 +54,8 @@ def main(**kwargs):
 
     gc = GameServer(dc, settings, exit_flag)
     gc.run()
+
+    open('data/settings.json', 'w').write(json.dumps(settings))
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ def main():
     project_persists = True
 
     try:
-        settings = json.loads(open('settings.json', 'r').read())
+        settings = json.loads(open('data/settings.json', 'r').read())
     except IOError:
         settings = {
             'uuid': str(uuid.uuid4())
@@ -37,7 +37,7 @@ def main():
     gc = GameClient(target, dc, settings)
     gc.run()
 
-    open('settings.json', 'w').write(json.dumps(settings))
+    open('data/settings.json', 'w').write(json.dumps(settings))
 
 
 if __name__ == "__main__":

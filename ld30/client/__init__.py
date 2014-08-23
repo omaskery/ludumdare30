@@ -2,6 +2,7 @@ __author__ = 'Oliver Maskery'
 
 
 from . import networking
+from .. import common
 import datetime
 import pygame
 import random
@@ -16,6 +17,12 @@ class Client(object):
         self.settings = settings
         self.networking = networking.Client(self, self.target, self.dc)
 
+        self.player = common.Player()
+        self.player.pos = None
+
+        if 'player' in self.settings.keys():
+            self.player.unblob(self.settings['player'])
+
         default_page = self.dc.get_page('default')
         framerates = default_page.get_section('Framerates')
         self.fps = framerates.get_value('FPS', 'int', 0)
@@ -24,13 +31,18 @@ class Client(object):
         status = default_page.get_section('Status')
         self.status_string = status.get_value('Status', 'string', 'initialising')
         uuid = status.get_value('UUID', 'string', self.settings['uuid'])
-        uuid.set(self.settings['uuid'])  # in case it didn't exist before!
+        uuid.set(self.settings['uuid'])  # in case it existed before!
+
+        player = default_page.get_section('Player')
+        name = player.get_value('Name', 'string', " ".join(self.player.name))
+        name.set(" ".join(self.player.name))  # in case it existed before
 
     def handle_message(self, message):
         print("networking reports message:", message)
 
     def handle_connected(self, target, local_server):
         print("networking reports connection to %s (local server: %s)" % (target, local_server))
+        self.networking.send_message(cmd='connect', player=self.player.blob())
 
     def run(self):
         self.status_string.set('initialising pygame')
@@ -57,6 +69,8 @@ class Client(object):
             now = datetime.datetime.now()
 
             self.networking.poll()
+            if self.networking.should_exit():
+                running = False
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -90,6 +104,9 @@ class Client(object):
 
         self.status_string.set('shutting down networking')
         self.networking.stop()
+
+        self.status_string.set('saving state')
+        self.settings['player'] = self.player.blob()
 
         self.status_string.set('quitting pygame')
         pygame.quit()

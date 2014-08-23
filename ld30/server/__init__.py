@@ -1,6 +1,7 @@
 __author__ = 'Oliver Maskery'
 
 
+from .. import common
 import asyncore
 import socket
 import json
@@ -21,7 +22,10 @@ class Server(asyncore.dispatcher):
 
         default_page = self.dc.get_page('default')
 
+        self.world = common.World(debug_client)
         self.clients = []
+
+        self.world.generate(100)
 
         status = default_page.get_section('Status')
         self.status_string = status.get_value('Status', 'string', 'initialising')
@@ -55,6 +59,12 @@ class Connection(asyncore.dispatcher_with_send):
         self.server = server
         self.buf = ''
 
+        self.player = None
+
+        self.handlers = {
+            'connect': self.handle_msg_connect
+        }
+
         print("[%s] connected" % self.address[0])
 
         self.send_message(message='welcome to the server!')
@@ -73,6 +83,19 @@ class Connection(asyncore.dispatcher_with_send):
 
     def handle_message(self, message):
         print("[%s] %s" % (self.address[0], message))
+
+        if 'cmd' not in message.keys():
+            return
+
+        if message['cmd'] not in self.handlers.keys():
+            return
+
+        self.handlers[message['cmd']](message)
+
+    def handle_msg_connect(self, message):
+        self.player = common.Player()
+        self.player.unblob(message['player'])
+        print("player connect message received: " + " ".join(self.player.name))
 
     def send_message(self, **values):
         data = "%s\n" % json.dumps(values)

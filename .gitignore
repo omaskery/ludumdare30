@@ -2,5 +2,5 @@ __pycache__
 .idea
 *.pyc
 *~
-settings.json
+data/settings.json
 

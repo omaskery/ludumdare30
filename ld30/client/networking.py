@@ -104,6 +104,7 @@ class Client(asyncore.dispatcher_with_send):
 
     def handle_close(self):
         print("disconnected")
+        self.stop()
         self.status_text.set('disconnected from %s' % self.target)
         self.close()
 
