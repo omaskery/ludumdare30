@@ -2,39 +2,19 @@
 
 __author__ = 'Oliver Maskery'
 
-
 from ld30.dbgsrv.client import Client as DebugClient
-from ld30.server import Server as GameServer
-import signal
+from ld30.game import Game as GameClient
 import uuid
 import json
 
 
-class SigintExitFlag(object):
-
-    def __init__(self):
-        self.kill_flag = False
-        signal.signal(signal.SIGINT, self.handle_kill_signal)
-
-    def handle_kill_signal(self, *ignore):
-        self.kill_flag = True
-
-    def should_exit(self):
-        return self.kill_flag
-
-
-def main(**kwargs):
+def main():
     debug_target = 'omaskery.co.uk'
 
     release = False
 
-    project_name = 'ld30-server'
+    project_name = 'ld30-game'
     project_persists = True
-
-    if 'exit_flag' in kwargs.keys():
-        exit_flag = kwargs['exit_flag']
-    else:
-        exit_flag = SigintExitFlag()
 
     try:
         settings = json.loads(open('data/settings.json', 'r').read())
@@ -52,7 +32,7 @@ def main(**kwargs):
     dc = DebugClient(project_name, persist=project_persists)
     dc.connect((debug_target, 45000))
 
-    gc = GameServer(dc, settings, exit_flag)
+    gc = GameClient(dc, settings)
     gc.run()
 
     open('data/settings.json', 'w').write(json.dumps(settings))
