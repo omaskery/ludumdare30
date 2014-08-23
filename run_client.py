@@ -2,14 +2,15 @@
 
 __author__ = 'Oliver Maskery'
 
-from dbgsrv.client import Client as DebugClient
-from client import Client as GameClient
+from ld30.dbgsrv.client import Client as DebugClient
+from ld30.client import Client as GameClient
 import uuid
 import json
 
 
 def main():
-    target = 'teamfrag.net'
+    debug_target = 'omaskery.co.uk'
+    target = 'localhost'
 
     release = False
 
@@ -28,9 +29,10 @@ def main():
     if release:
         project_name += ":" + system_uuid
         project_persists = False
+        target = 'teamfrag.net'
 
     dc = DebugClient(project_name, persist=project_persists)
-    dc.connect((target, 45000))
+    dc.connect((debug_target, 45000))
 
     gc = GameClient(target, dc, settings)
     gc.run()
