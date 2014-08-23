@@ -1,0 +1,84 @@
+__author__ = 'Oliver Maskery'
+
+
+import asyncore
+import socket
+import json
+
+
+class Server(asyncore.dispatcher):
+
+    def __init__(self, debug_client, settings, exit_flag):
+        asyncore.dispatcher.__init__(self)
+        self.dc = debug_client
+        self.settings = settings
+        self.exit_flag = exit_flag
+
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.set_reuse_addr()
+        self.bind(('', 20000))
+        self.listen(100)
+
+        default_page = self.dc.get_page('default')
+
+        self.clients = []
+
+        status = default_page.get_section('Status')
+        self.status_string = status.get_value('Status', 'string', 'initialising')
+        uuid = status.get_value('UUID', 'string', self.settings['uuid'])
+        uuid.set(self.settings['uuid'])  # in case it already exists
+        self.connections = status.get_value('Connections', 'int', 0)
+        self.connections.set(0)  # in case it already exists
+
+    def handle_accepted(self, sock, address):
+        client = Connection(self, sock, address)
+        self.clients.append(client)
+        self.connections.set(len(self.clients))
+
+    def remove(self, client):
+        self.clients.remove(client)
+        self.connections.set(len(self.clients))
+
+    def run(self):
+        self.status_string.set('running main process loop')
+        while not self.exit_flag.should_exit():
+            asyncore.poll()
+
+        self.status_string.set('exiting cleanly')
+
+
+class Connection(asyncore.dispatcher_with_send):
+
+    def __init__(self, server, sock, address):
+        asyncore.dispatcher_with_send.__init__(self, sock)
+        self.address = address
+        self.server = server
+        self.buf = ''
+
+        print("[%s] connected" % self.address[0])
+
+        self.send_message(message='welcome to the server!')
+
+    def handle_read(self):
+        self.buf += self.recv(2048).decode()
+        while True:
+            end = self.buf.find("\n")
+            if end == -1:
+                break
+
+            message = self.buf[:end]
+            self.buf = self.buf[end+1:]
+
+            self.handle_message(json.loads(message))
+
+    def handle_message(self, message):
+        print("[%s] %s" % (self.address[0], message))
+
+    def send_message(self, **values):
+        data = "%s\n" % json.dumps(values)
+        self.send(data.encode())
+
+    def handle_close(self):
+        print("[%s] disconnecting" % self.address[0])
+        self.server.remove(self)
+        self.close()
