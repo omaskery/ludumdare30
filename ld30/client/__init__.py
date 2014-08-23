@@ -4,9 +4,30 @@ __author__ = 'Oliver Maskery'
 from . import networking
 from .. import common
 import datetime
+import socket
 import pygame
-import random
-import time
+
+class Drawable(object):
+
+    def __init__(self):
+        self.entity = None
+
+    def draw(self, dest):
+        pass
+
+
+class PlayerDrawable(Drawable):
+
+    def __init__(self, player):
+        super().__init__()
+        self.entity = player
+
+    def draw(self, dest):
+        if self.entity is None:
+            return
+
+        if self.entity.pos is not None:
+            pygame.draw.rect(dest, (255, 0, 0), (self.entity.pos, (32, 32)))
 
 
 class Client(object):
@@ -19,6 +40,9 @@ class Client(object):
 
         self.player = common.Player()
         self.player.pos = None
+
+        self.renderables = []
+        self.renderables.append(PlayerDrawable(self.player))
 
         if 'player' in self.settings.keys():
             self.player.unblob(self.settings['player'])
@@ -36,13 +60,64 @@ class Client(object):
         player = default_page.get_section('Player')
         name = player.get_value('Name', 'string', " ".join(self.player.name))
         name.set(" ".join(self.player.name))  # in case it existed before
+        self.debug_pos = player.get_value('Position', 'vector2D', None)
+        self.debug_vel = player.get_value('Velocity', 'vector2D', [0, 0])
+
+        self.player_vel = [0, 0]
+
+        self.handlers = {
+            'connect': self.handle_msg_connect
+        }
+
+        self.accepted = False
+
+        self.debug_counter = 0
 
     def handle_message(self, message):
         print("networking reports message:", message)
+        if 'ack' not in message.keys():
+            return
+        if message['ack'] not in self.handlers.keys():
+            return
+        self.handlers[message['ack']](message)
+
+    def handle_msg_connect(self, message):
+        if not message['success']:
+            raise Exception("server refused connection")
+        self.player.pos = message['pos']
+        self.accepted = True
 
     def handle_connected(self, target, local_server):
         print("networking reports connection to %s (local server: %s)" % (target, local_server))
         self.networking.send_message(cmd='connect', player=self.player.blob())
+
+    def think(self):
+        debug_interval = 100
+
+        player_accel = 0.5
+        player_friction = 0.8
+
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_LEFT]:
+            self.player_vel[0] -= player_accel
+        elif pressed[pygame.K_RIGHT]:
+            self.player_vel[0] += player_accel
+        if pressed[pygame.K_UP]:
+            self.player_vel[1] -= player_accel
+        elif pressed[pygame.K_DOWN]:
+            self.player_vel[1] += player_accel
+
+        self.player.pos[0] += self.player_vel[0]
+        self.player.pos[1] += self.player_vel[1]
+        self.player_vel[0] *= player_friction
+        self.player_vel[1] *= player_friction
+
+        self.debug_counter += 1
+        if self.debug_counter >= debug_interval:
+            self.debug_counter = 0
+
+            self.debug_pos.quick_set(self.player.pos)
+            self.debug_vel.quick_set(self.player_vel)
 
     def run(self):
         self.status_string.set('initialising pygame')
@@ -69,6 +144,10 @@ class Client(object):
             now = datetime.datetime.now()
 
             self.networking.poll()
+            self.dc.set_non_blocking(0.01)
+            self.dc.disgard()
+            self.dc.handle.setblocking(True)
+
             if self.networking.should_exit():
                 running = False
 
@@ -79,7 +158,8 @@ class Client(object):
             if now >= next_think:
                 next_think += think_period
 
-                #
+                if self.accepted:
+                    self.think()
 
                 logic_frames += 1
 
@@ -87,7 +167,8 @@ class Client(object):
                 next_draw = now + draw_period
                 screen.fill((0, 0, 0))
 
-                #
+                for drawable in self.renderables:
+                    drawable.draw(screen)
 
                 pygame.display.flip()
                 draw_frames += 1

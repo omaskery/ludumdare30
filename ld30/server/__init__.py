@@ -4,6 +4,7 @@ __author__ = 'Oliver Maskery'
 from .. import common
 import asyncore
 import socket
+import random
 import json
 
 
@@ -60,6 +61,7 @@ class Connection(asyncore.dispatcher_with_send):
         self.buf = ''
 
         self.player = None
+        self.node = None
 
         self.handlers = {
             'connect': self.handle_msg_connect
@@ -95,7 +97,15 @@ class Connection(asyncore.dispatcher_with_send):
     def handle_msg_connect(self, message):
         self.player = common.Player()
         self.player.unblob(message['player'])
+
         print("player connect message received: " + " ".join(self.player.name))
+
+        self.node = random.choice(self.server.world.nodes)
+        self.node.entities.append(self.player)
+
+        self.player.pos = self.node.random_free_position(self.node.random_position, True)
+
+        self.send_message(ack='connect', success=True, pos=self.player.pos)
 
     def send_message(self, **values):
         data = "%s\n" % json.dumps(values)

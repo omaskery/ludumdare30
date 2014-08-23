@@ -105,9 +105,15 @@ class Node(object):
         self.tiles = [Tile() for x in range(size[0] * size[1])]
         self.size = size
         self.tile_size = 32
+        self.entities = []
+
+    def tile_at(self, x, y):
+        return self.tiles[y * self.size[0] + x]
 
     def at(self, x, y):
-        return self.tiles[y * self.size[0] + x]
+        tile_x = int(x / self.tile_size)
+        tile_y = int(y / self.tile_size)
+        return self.tile_at(tile_x, tile_y)
 
     def random_position(self):
         return random.randint(0, self.size[0]-1), random.randint(0, self.size[1]-1)
@@ -120,7 +126,7 @@ class Node(object):
             result[1] = random.choice([0, self.size[1]-1])
         return tuple(result)
 
-    def random_free_position(self, position_source):
+    def random_free_position(self, position_source, scale=False):
         # quickly check there IS a free space in existence
         space_exists = False
         for tile in self.tiles:
@@ -134,9 +140,13 @@ class Node(object):
         # isn't guaranteed to actually ever exit sooo... <_< >_>
         while True:
             position = position_source()
-            tile = self.at(position[0], position[1])
+            tile = self.tile_at(position[0], position[1])
             if tile.entity is None:
-                return position
+                position = list(position)
+                if scale:
+                    position[0] *= self.tile_size
+                    position[1] *= self.tile_size
+                return tuple(position)
 
 
 class Tile(object):
@@ -184,7 +194,7 @@ class Totem(Entity):
 
         self.parent_node = parent_node
         position_source = parent_node.random_edge_position
-        self.pos = list(parent_node.random_free_position(position_source))
+        self.pos = list(parent_node.random_free_position(position_source, True))
 
         self.destination = None
 
