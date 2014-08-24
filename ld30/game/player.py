@@ -89,7 +89,7 @@ class Player(object):
         self.pos = [0, 0]
         self.animator = Animator(sheet)
         self.particles = particles
-        self.totems = []
+        self.world = None
 
         idle_frames = [4, 5]
         walk_frames = [12, 13, 14, 15, 20, 21, 22]
@@ -115,6 +115,9 @@ class Player(object):
         self.moving = False
         self.dir_string = 'right'
         self.proximity = 0.0
+
+    def world_point(self):
+        return (self.pos[0] + 32, self.pos[1] + 58)
 
     def think(self):
         keys = pygame.key.get_pressed()
@@ -156,21 +159,30 @@ class Player(object):
         elif random.random() <= 0.001:
             self.animator.set_animation('cough_%s' % self.dir_string, self.done_coughing)
 
-        proximities = []
-        for totem in self.totems:
-            distance = math.hypot(self.pos[0] - totem.pos[0], self.pos[1] - totem.pos[1])
-            sense_radius = 100.0
-            if distance < sense_radius:
-                percent = (sense_radius - distance) / sense_radius
-                totem.intensity = percent
-                proximities.append(percent)
+        if self.world is not None:
+            proximities = []
+            for totem in self.world.totems:
+                distance = math.hypot(self.pos[0] - totem.pos[0], self.pos[1] - totem.pos[1])
+                sense_radius = 50.0
+                if distance < sense_radius:
+                    percent = (sense_radius - distance) / sense_radius
+                    totem.intensity = percent
+                    proximities.append(percent)
+                else:
+                    proximities.append(0.0)
+                    totem.intensity = 0.1
+            if len(proximities) > 0:
+                self.proximity = sum(proximities) / len(proximities)
             else:
-                proximities.append(0.0)
-                totem.intensity = 0.1
-        if len(proximities) > 0:
-            self.proximity = sum(proximities) / len(proximities)
-        else:
-            self.proximity = 0
+                self.proximity = 0
+            for detail in self.world.details:
+                delta = [self.pos[0] - detail.pos[0], self.pos[1] - detail.pos[1]]
+                distance = math.hypot(delta[0], delta[1])
+                touch_radius = 20
+                normal_delta = [delta[0] / distance, delta[1] / distance]
+                if distance <= touch_radius:
+                    self.pos[0] += normal_delta[0]
+                    self.pos[1] += normal_delta[1]
 
     def done_coughing(self):
         self.animator.set_animation('idle_%s' % self.dir_string)

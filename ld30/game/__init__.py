@@ -80,7 +80,7 @@ class Game(object):
 
         self.player = Player(self.dc, self.totem_sheet, self.particles)
         self.player.pos = list(self.world.centre_offset)
-        self.player.totems = self.world.totems
+        self.player.world = self.world
 
         self.context = RenderContext(self.screen)
         self.context.focus_on(self.world.centre_offset)
@@ -100,9 +100,8 @@ class Game(object):
     def draw(self, dest):
         dest.fill((128, 200, 255))
 
+        self.world.put_in_draw_queue((self.player.world_point(), self.player))
         self.world.draw(self.context)
-
-        self.player.draw(self.context)
 
         self.particles.draw(self.context)
 

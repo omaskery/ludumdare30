@@ -13,6 +13,9 @@ class Totem(object):
         self.pos = [0, 0]
         self.intensity = 0.1
 
+    def world_point(self):
+        return (self.pos[0] + 32, self.pos[1] + 64)
+
     def think(self):
         x = self.pos[0]+32-2
         y = self.pos[1]+16

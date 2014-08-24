@@ -13,6 +13,9 @@ class Pedestal(object):
         self.particles = particles
         self.pos = [0, 0]
 
+    def world_point(self):
+        return (self.pos[0] + 32, self.pos[1] + 56)
+
     def think(self):
         x = self.pos[0]+32-2
         y = self.pos[1]+16

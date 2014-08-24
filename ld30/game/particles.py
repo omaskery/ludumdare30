@@ -24,54 +24,76 @@ class ParticleSystem(object):
             particle.draw(dest)
 
 
-class TotemParticle(object):
-
-    def __init__(self, sheet, x, y, intensity):
-        self.sheet = sheet
-        self.x = x
-        self.y = y
-        self.intensity = intensity
-        self.dx = self.x
-        self.t = random.random() * 10.0
-        self.index = random.randint(0, 3)
-        self.dead = False
-
-    def update(self):
-        self.dx = self.x + math.cos(self.t) * 1.5
-        self.t += 0.02 + random.gauss(0.0, 0.01)
-        self.y -= max(self.intensity, 0.4)
-
-    def draw(self, context):
-        dx = self.dx - context.camera[0]
-        dy = self.y - context.camera[1]
-        if dy < 0:
-            self.dead = True
-        context.dest.blit(self.sheet, (dx, dy), (128+(self.index*6), 0, 3, 3))
-
-
-class WorldParticle(object):
+class BaseParticle(object):
 
     def __init__(self, sheet, x, y):
         self.sheet = sheet
         self.x = x
         self.y = y
-        self.yspeed = random.gauss(0.5, 0.02)
-        self.dx = self.x
-        self.t = random.random() * 10.0
-        self.index = random.randint(0, 3)
+        self.x_index = 0
+        self.y_index = 0
         self.dead = False
 
+    def set_index(self, x, y):
+        self.x_index = x
+        self.y_index = y
+
+    def die(self):
+        self.dead = True
+
     def update(self):
-        self.dx = self.x + math.cos(self.t) * 1.5
+        pass
+
+    def draw(self, context):
+        dx = self.x - context.camera[0]
+        dy = self.y - context.camera[1]
+        context.dest.blit(self.sheet, (dx, dy), (128+(self.x_index*6), self.y_index*6, 6, 6))
+
+
+class TotemParticle(BaseParticle):
+
+    def __init__(self, sheet, x, y, intensity):
+        super().__init__(sheet, x, y)
+
+        self.intensity = intensity
+        self.base_x = self.x
+        self.t = random.random() * 10.0
+
+        self.set_index(random.randint(0, 3), 0)
+
+    def update(self):
+        self.x = self.base_x + math.cos(self.t) * 1.5
+        self.t += 0.02 + random.gauss(0.0, 0.01)
+        self.y -= max(self.intensity, 0.4)
+
+    def draw(self, context):
+        if self.y - context.camera[1] < 0:
+            self.die()
+        else:
+            super().draw(context)
+
+
+class WorldParticle(BaseParticle):
+
+    def __init__(self, sheet, x, y):
+        super().__init__(sheet, x, y)
+
+        self.yspeed = random.gauss(0.5, 0.02)
+        self.base_x = self.x
+        self.t = random.random() * 10.0
+
+        self.set_index(random.randint(0, 3), 1)
+
+    def update(self):
+        self.x = self.base_x + math.cos(self.t) * 1.5
         self.t += 0.02 + random.gauss(0.0, 0.01)
         self.y -= max(self.yspeed, 0.01)
 
     def draw(self, context):
-        dx = self.dx - context.camera[0]
-        dy = self.y - context.camera[1]
-        if dy < 0:
-            self.dead = True
-        context.dest.blit(self.sheet, (dx, dy), (128+(self.index*6), 6, 3, 3))
+        if self.y - context.camera[1] < 0:
+            self.die()
+        else:
+            super().draw(context)
 
 
 class FireParticle(object):
@@ -106,7 +128,7 @@ class FireParticle(object):
         dy = self.y - context.camera[1]
         if dy < 0:
             self.dead = True
-        context.dest.blit(self.sheet, (dx, dy), (128+(self.index_x*6), self.index_y*6, 3, 3))
+        context.dest.blit(self.sheet, (dx, dy), (128+(self.index_x*6), self.index_y*6, 6, 6))
 
 
 class SmokeParticle(object):
@@ -135,4 +157,4 @@ class SmokeParticle(object):
         dy = self.y - context.camera[1]
         if dy < 0:
             self.dead = True
-        context.dest.blit(self.sheet, (dx, dy), (128+(self.index_x*6), self.index_y*6, 3, 3))
+        context.dest.blit(self.sheet, (dx, dy), (128+(self.index_x*6), self.index_y*6, 6, 6))
