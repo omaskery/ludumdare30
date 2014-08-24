@@ -81,8 +81,6 @@ class FireParticle(object):
         self.xvel = 0
         self.x = x
         self.y = y
-        self.dx = self.x
-        self.t = random.random() * 10.0
         self.index_x = random.randint(0, 3)
         self.index_y = random.choice([3, 4])
         self.dead = False
@@ -93,8 +91,6 @@ class FireParticle(object):
         self.xvel += self.wind.accel
         self.xvel *= 0.99
         self.x += self.xvel
-        self.dx = self.x + math.cos(self.t) * 1.5
-        self.t += 0.02 + random.gauss(0.0, 0.01)
         self.y -= 0.4
         if not self.dead and datetime.datetime.now() >= self.die_time:
             self.dead = True
@@ -102,7 +98,7 @@ class FireParticle(object):
                 self.particles.add(SmokeParticle(self.wind, self.sheet, self.x, self.y))
 
     def draw(self, context):
-        dx = self.dx - context.camera[0]
+        dx = self.x - context.camera[0]
         dy = self.y - context.camera[1]
         context.dest.blit(self.sheet, (dx, dy), (128+(self.index_x*6), self.index_y*6, 3, 3))
 
@@ -115,8 +111,6 @@ class SmokeParticle(object):
         self.xvel = 0
         self.x = x
         self.y = y
-        self.dx = self.x
-        self.t = random.random() * 10.0
         self.index_x = random.randint(0, 3)
         self.index_y = random.choice([1, 2])
         self.dead = False
@@ -125,14 +119,12 @@ class SmokeParticle(object):
         self.xvel += self.wind.accel
         self.xvel *= 0.99
         self.x += self.xvel
-        self.dx = self.x + math.cos(self.t) * 1.5
-        self.t += 0.02 + random.gauss(0.0, 0.01)
         self.y -= 0.4
         if random.random() <= 0.005:
             self.dead = True
 
     def draw(self, context):
-        dx = self.dx - context.camera[0]
+        dx = self.x - context.camera[0]
         dy = self.y - context.camera[1]
         if dy < 0:
             self.dead = True

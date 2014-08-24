@@ -26,7 +26,7 @@ class World(object):
         self.valid_tiles = []
         self.totems = []
         self.details = []
-        self.tile_size = (64, 34)
+        self.tile_size = (62, 32)
         self.pixel_size = self.tile_size[0] * self.size[0], self.tile_size[1] * self.size[1]
         self.centre_offset = int(self.pixel_size[0] / 2), int(self.pixel_size[1] / 2)
 
@@ -112,18 +112,19 @@ class World(object):
                 tile = self.tile_at(x, y)
                 if tile is None:
                     continue
-                dx = x * self.tile_size[0] - context.camera[0]
-                dy = y * self.tile_size[1] - context.camera[1]
+                dx = x * self.tile_size[0] - context.camera[0] + tile.offset[0]
+                dy = y * self.tile_size[1] - context.camera[1] + tile.offset[1]
                 context.dest.blit(self.sheet, (dx, dy), tile_mappings[tile.value])
-        for totem in self.totems:
-            totem.draw(context)
         for detail in self.details:
             detail.draw(context)
+        for totem in self.totems:
+            totem.draw(context)
 
 
 class Tile(object):
 
     def __init__(self, value, pos):
+        self.offset = [random.choice([-1, 0, 1]), random.choice([-1, 0, 1])]
         self.value = value
         self.pos = pos
         self.blocked = False
