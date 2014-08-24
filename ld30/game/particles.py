@@ -55,6 +55,7 @@ class WorldParticle(object):
         self.sheet = sheet
         self.x = x
         self.y = y
+        self.yspeed = random.gauss(0.5, 0.02)
         self.dx = self.x
         self.t = random.random() * 10.0
         self.index = random.randint(0, 3)
@@ -63,7 +64,7 @@ class WorldParticle(object):
     def update(self):
         self.dx = self.x + math.cos(self.t) * 1.5
         self.t += 0.02 + random.gauss(0.0, 0.01)
-        self.y -= 0.4
+        self.y -= max(self.yspeed, 0.01)
 
     def draw(self, context):
         dx = self.dx - context.camera[0]
@@ -82,7 +83,7 @@ class FireParticle(object):
         self.xvel = 0
         self.x = x
         self.y = y
-        self.yspeed = 0.1 + random.random() * 0.4
+        self.yspeed = 0.1 + random.random() * 0.8
         self.index_x = random.randint(0, 3)
         self.index_y = random.choice([3, 4])
         self.dead = False
@@ -103,6 +104,8 @@ class FireParticle(object):
     def draw(self, context):
         dx = self.x - context.camera[0]
         dy = self.y - context.camera[1]
+        if dy < 0:
+            self.dead = True
         context.dest.blit(self.sheet, (dx, dy), (128+(self.index_x*6), self.index_y*6, 3, 3))
 
 
@@ -124,7 +127,7 @@ class SmokeParticle(object):
         self.xvel *= 0.999
         self.x += self.xvel
         self.y -= self.yspeed
-        if random.random() <= 0.003:
+        if random.random() <= 0.005:
             self.dead = True
 
     def draw(self, context):

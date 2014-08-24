@@ -17,7 +17,7 @@ class Pedestal(object):
         x = self.pos[0]+32-2
         y = self.pos[1]+16
 
-        if random.random() <= 0.8:
+        if random.random() <= 0.9:
             particle = FireParticle(self.wind, self.particles, self.sheet, x + random.gauss(0.0, 2.0), y + 18)
             self.particles.add(particle)
 

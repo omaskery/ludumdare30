@@ -114,6 +114,7 @@ class Player(object):
 
         self.moving = False
         self.dir_string = 'right'
+        self.proximity = 0.0
 
     def think(self):
         keys = pygame.key.get_pressed()
@@ -155,17 +156,25 @@ class Player(object):
         elif random.random() <= 0.001:
             self.animator.set_animation('cough_%s' % self.dir_string, self.done_coughing)
 
+        proximities = []
         for totem in self.totems:
             distance = math.hypot(self.pos[0] - totem.pos[0], self.pos[1] - totem.pos[1])
-            sense_radius = 200.0
+            sense_radius = 100.0
             if distance < sense_radius:
                 percent = (sense_radius - distance) / sense_radius
                 totem.intensity = percent
+                proximities.append(percent)
             else:
+                proximities.append(0.0)
                 totem.intensity = 0.1
+        if len(proximities) > 0:
+            self.proximity = sum(proximities) / len(proximities)
+        else:
+            self.proximity = 0
 
     def done_coughing(self):
         self.animator.set_animation('idle_%s' % self.dir_string)
 
     def draw(self, context):
+        context.camera_shake(self.proximity * 10.0)
         self.animator.draw(context, self.pos[0], self.pos[1])
