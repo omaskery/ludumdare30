@@ -1,29 +1,12 @@
 __author__ = 'Oliver Maskery'
 
 
+from .particles import ParticleSystem
+from .totem import Totem
 import datetime
 import pygame
 import random
 import math
-
-
-class TotemParticle(object):
-
-    def __init__(self, sheet, x, y, index):
-        self.sheet = sheet
-        self.x = x
-        self.y = y
-        self.dx = self.x
-        self.t = random.random() * 10.0
-        self.index = index
-
-    def update(self):
-        self.dx = self.x + math.cos(self.t) * 1.5
-        self.t += 0.02 + random.gauss(0.0, 0.01)
-        self.y -= 0.4
-
-    def draw(self, dest):
-        dest.blit(self.sheet, (self.dx, self.y), (128+(self.index*6), 0, 3, 3))
 
 
 class Game(object):
@@ -45,67 +28,40 @@ class Game(object):
         rendering = default_page.get_section('Rendering')
         self.particle_count = rendering.get_value('Particle Count', 'int', 0)
 
-        self.totem_sheet = None
-        self.totems = []
-        self.particles = []
-
-        for index in range(3):
-            angle = random.random() * (2 * math.pi)
-            radius = 100 + random.gauss(100, 10)
-            x = 400 + math.cos(angle) * radius
-            y = 300 + math.sin(angle) * radius
-            self.totems.append([x, y, False])
-
-    def think(self):
-        types = [0, 1, 2, 3]
-        for totem in self.totems:
-            x = totem[0]+32-2
-            y = totem[1]+16
-            if random.random() <= 0.05:
-                particle = TotemParticle(self.totem_sheet, x + random.gauss(0.0, 2.0), y, random.choice(types))
-                self.particles.append(particle)
-            if random.random() <= 0.005:
-                side_x = x
-                if random.random() <= 0.5:
-                    side_x -= 16
-                else:
-                    side_x += 16
-                particle = TotemParticle(self.totem_sheet, side_x + random.gauss(0.0, 2.0), y+40, random.choice(types))
-                self.particles.append(particle)
-        self.particle_count.quick_set(len(self.particles))
-        for particle in self.particles:
-            particle.update()
-        self.particles = [particle for particle in self.particles if particle.y >= 0]
-
-    def draw(self, dest):
-        dest.fill((128, 128, 128))
-
-        for totem in self.totems:
-            if random.random() <= 0.02:
-                totem[2] = not totem[2]
-
-            if totem[2]:
-                src_x = 64
-            else:
-                src_x = 0
-
-            dest.blit(self.totem_sheet, (totem[0], totem[1]), (src_x, 64, 64, 64))
-            for index in range(1, 30):
-                dy = totem[1] - (64 * index)
-                dest.blit(self.totem_sheet, (totem[0], dy), (src_x, 0, 64, 64))
-                if dy < 0:
-                    break
-        for particle in self.particles:
-            particle.draw(dest)
-
-    def run(self):
         self.status_string.quick_set('initialising pygame')
-
         pygame.init()
-        screen = pygame.display.set_mode((800, 600))
-        running = True
+        self.screen = screen = pygame.display.set_mode((800, 600))
 
         self.totem_sheet = pygame.transform.scale2x(pygame.image.load('data/sprites/totem.png').convert_alpha())
+        self.totems = []
+        self.particles = ParticleSystem()
+
+        for index in range(3):
+            totem = Totem(self.totem_sheet, self.particles)
+            angle = random.random() * (2 * math.pi)
+            radius = 100 + random.gauss(100, 10)
+            totem.pos[0] = 400 + math.cos(angle) * radius
+            totem.pos[1] = 300 + math.sin(angle) * radius
+            self.totems.append(totem)
+
+    def think(self):
+        for totem in self.totems:
+            totem.think()
+
+        self.particles.think()
+        self.particle_count.quick_set(len(self.particles.particles))
+
+    def draw(self, dest):
+        dest.fill((128, 200, 255))
+
+        for totem in self.totems:
+            totem.draw(dest)
+
+        self.particles.draw(dest)
+
+    def run(self):
+        screen = self.screen
+        running = True
 
         draw_frames = 0
         logic_frames = 0
