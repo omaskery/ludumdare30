@@ -64,6 +64,7 @@ class World(object):
             totem = Totem(sheet, particles)
             totem.pos[0] = x * self.tile_size[0] + int(random.gauss(0, 5))
             totem.pos[1] = y * self.tile_size[1] - 24 + int(random.gauss(0, 2))
+            chosen.object = totem
             self.totems.append(totem)
 
         for x in range(random.randint(1, 5)):
@@ -75,6 +76,7 @@ class World(object):
             pedestal = Pedestal(self.wind, sheet, particles)
             pedestal.pos[0] = x * self.tile_size[0] + int(random.gauss(0, 5))
             pedestal.pos[1] = y * self.tile_size[1] - 24 + int(random.gauss(0, 2))
+            chosen.object = pedestal
             self.details.append(pedestal)
 
     def tile_at(self, x, y):
@@ -115,10 +117,8 @@ class World(object):
                 dx = x * self.tile_size[0] - context.camera[0] + tile.offset[0]
                 dy = y * self.tile_size[1] - context.camera[1] + tile.offset[1]
                 context.dest.blit(self.sheet, (dx, dy), tile_mappings[tile.value])
-        for detail in self.details:
-            detail.draw(context)
-        for totem in self.totems:
-            totem.draw(context)
+                if tile.object is not None:
+                    tile.object.draw(context)
 
 
 class Tile(object):
@@ -128,3 +128,4 @@ class Tile(object):
         self.value = value
         self.pos = pos
         self.blocked = False
+        self.object = None
