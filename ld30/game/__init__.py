@@ -2,6 +2,7 @@ __author__ = 'Oliver Maskery'
 
 
 from .particles import ParticleSystem
+from .player import Player
 from .world import World
 import datetime
 import pygame
@@ -17,6 +18,15 @@ class RenderContext(object):
 
     def focus_on(self, point):
         self.camera = [point[0] - self.half_size[0], point[1] - self.half_size[1]]
+
+    def soft_focus_on(self, point, alpha):
+        cx, cy = self.camera
+        px, py = point
+        px -= self.half_size[0]
+        py -= self.half_size[1]
+        dx, dy = px - cx, py - cy
+        self.camera[0] += dx * alpha
+        self.camera[1] += dy * alpha
 
 
 class Game(object):
@@ -38,14 +48,26 @@ class Game(object):
         rendering = default_page.get_section('Rendering')
         self.particle_count = rendering.get_value('Particle Count', 'int', 0)
 
-        self.status_string.quick_set('initialising pygame')
+        self.status_string.set('initialising pygame')
         pygame.init()
-        self.screen = pygame.display.set_mode((800, 600))
+        flags = 0
+        if 'fullscreen' in self.settings.keys():
+            if self.settings['fullscreen']:
+                flags = pygame.FULLSCREEN
+
+        resolution = (800, 600)
+        if 'resolution' in self.settings.keys():
+            resolution = tuple(self.settings['resolution'])
+        self.screen = pygame.display.set_mode(resolution, flags)
 
         self.totem_sheet = pygame.transform.scale2x(pygame.image.load('data/sprites/totem.png').convert_alpha())
         self.particles = ParticleSystem()
 
         self.world = World(self.totem_sheet, self.particles)
+
+        self.player = Player(self.dc, self.totem_sheet, self.particles)
+        self.player.pos = list(self.world.centre_offset)
+        self.player.totems = self.world.totems
 
         self.context = RenderContext(self.screen)
         self.context.focus_on(self.world.centre_offset)
@@ -53,13 +75,19 @@ class Game(object):
     def think(self):
         self.world.think()
 
+        self.player.think()
+
         self.particles.think()
         self.particle_count.quick_set(len(self.particles.particles))
+
+        self.context.soft_focus_on(self.player.pos, 0.01)
 
     def draw(self, dest):
         dest.fill((128, 200, 255))
 
         self.world.draw(self.context)
+
+        self.player.draw(self.context)
 
         self.particles.draw(self.context)
 
@@ -91,6 +119,9 @@ class Game(object):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
 
             if now >= next_think:
                 next_think += think_period

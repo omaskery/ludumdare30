@@ -19,10 +19,10 @@ def main():
     try:
         settings = json.loads(open('data/settings.json', 'r').read())
     except IOError:
-        settings = {
-            'uuid': str(uuid.uuid4())
-        }
+        settings = {}
 
+    if 'uuid' not in settings.keys():
+        settings['uuid'] = str(uuid.uuid4())
     system_uuid = settings['uuid']
 
     if release:

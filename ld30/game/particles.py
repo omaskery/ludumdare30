@@ -26,10 +26,11 @@ class ParticleSystem(object):
 
 class TotemParticle(object):
 
-    def __init__(self, sheet, x, y):
+    def __init__(self, sheet, x, y, intensity):
         self.sheet = sheet
         self.x = x
         self.y = y
+        self.intensity = intensity
         self.dx = self.x
         self.t = random.random() * 10.0
         self.index = random.randint(0, 3)
@@ -38,7 +39,7 @@ class TotemParticle(object):
     def update(self):
         self.dx = self.x + math.cos(self.t) * 1.5
         self.t += 0.02 + random.gauss(0.0, 0.01)
-        self.y -= 0.6
+        self.y -= max(self.intensity, 0.4)
 
     def draw(self, context):
         dx = self.dx - context.camera[0]
@@ -81,20 +82,22 @@ class FireParticle(object):
         self.xvel = 0
         self.x = x
         self.y = y
+        self.yspeed = 0.1 + random.random() * 0.4
         self.index_x = random.randint(0, 3)
         self.index_y = random.choice([3, 4])
         self.dead = False
-        self.lifetime = datetime.timedelta(seconds=random.random() * 1.0)
+        self.lifetime = datetime.timedelta(seconds=random.gauss(0.5, 0.5) * 1.0)
         self.die_time = datetime.datetime.now() + self.lifetime
+        self.coefficient = random.random()
 
     def update(self):
-        self.xvel += self.wind.accel
+        self.xvel += self.wind.accel * self.coefficient
         self.xvel *= 0.99
         self.x += self.xvel
-        self.y -= 0.4
+        self.y -= self.yspeed
         if not self.dead and datetime.datetime.now() >= self.die_time:
             self.dead = True
-            if random.random() <= 0.2:
+            if random.random() <= 0.4:
                 self.particles.add(SmokeParticle(self.wind, self.sheet, self.x, self.y))
 
     def draw(self, context):
@@ -111,16 +114,17 @@ class SmokeParticle(object):
         self.xvel = 0
         self.x = x
         self.y = y
+        self.yspeed = 0.1 + random.random() * 0.4
         self.index_x = random.randint(0, 3)
         self.index_y = random.choice([1, 2])
         self.dead = False
 
     def update(self):
         self.xvel += self.wind.accel
-        self.xvel *= 0.99
+        self.xvel *= 0.999
         self.x += self.xvel
-        self.y -= 0.4
-        if random.random() <= 0.005:
+        self.y -= self.yspeed
+        if random.random() <= 0.003:
             self.dead = True
 
     def draw(self, context):
