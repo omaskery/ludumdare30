@@ -2,11 +2,21 @@ __author__ = 'Oliver Maskery'
 
 
 from .particles import ParticleSystem
-from .totem import Totem
+from .world import World
 import datetime
 import pygame
-import random
-import math
+
+
+class RenderContext(object):
+
+    def __init__(self, screen):
+        self.dest = screen
+        self.size = screen.get_size()
+        self.half_size = (int(self.size[0] / 2), int(self.size[1] / 2))
+        self.camera = [0, 0]
+
+    def focus_on(self, point):
+        self.camera = [point[0] - self.half_size[0], point[1] - self.half_size[1]]
 
 
 class Game(object):
@@ -30,23 +40,18 @@ class Game(object):
 
         self.status_string.quick_set('initialising pygame')
         pygame.init()
-        self.screen = screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode((800, 600))
 
         self.totem_sheet = pygame.transform.scale2x(pygame.image.load('data/sprites/totem.png').convert_alpha())
-        self.totems = []
         self.particles = ParticleSystem()
 
-        for index in range(3):
-            totem = Totem(self.totem_sheet, self.particles)
-            angle = random.random() * (2 * math.pi)
-            radius = 100 + random.gauss(100, 10)
-            totem.pos[0] = 400 + math.cos(angle) * radius
-            totem.pos[1] = 300 + math.sin(angle) * radius
-            self.totems.append(totem)
+        self.world = World(self.totem_sheet, self.particles)
+
+        self.context = RenderContext(self.screen)
+        self.context.focus_on(self.world.centre_offset)
 
     def think(self):
-        for totem in self.totems:
-            totem.think()
+        self.world.think()
 
         self.particles.think()
         self.particle_count.quick_set(len(self.particles.particles))
@@ -54,10 +59,9 @@ class Game(object):
     def draw(self, dest):
         dest.fill((128, 200, 255))
 
-        for totem in self.totems:
-            totem.draw(dest)
+        self.world.draw(self.context)
 
-        self.particles.draw(dest)
+        self.particles.draw(self.context)
 
     def run(self):
         screen = self.screen

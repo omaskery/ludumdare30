@@ -21,7 +21,7 @@ class Totem(object):
         x = self.pos[0]+32-2
         y = self.pos[1]+16
         if random.random() <= 0.05:
-            particle = TotemParticle(self.sheet, x + random.gauss(0.0, 2.0), y, random.choice(types))
+            particle = TotemParticle(self.sheet, x + random.gauss(0.0, 2.0), y)
             self.particles.add(particle)
         if random.random() <= 0.005:
             side_x = x
@@ -29,19 +29,21 @@ class Totem(object):
                 side_x -= 16
             else:
                 side_x += 16
-            particle = TotemParticle(self.sheet, side_x + random.gauss(0.0, 2.0), y+40, random.choice(types))
+            particle = TotemParticle(self.sheet, side_x + random.gauss(0.0, 2.0), y+40)
             self.particles.add(particle)
 
-    def draw(self, dest):
+    def draw(self, context):
         if self.glowing:
             src_x = 64
         else:
             src_x = 0
 
-        dest.blit(self.sheet, self.pos, (src_x, 64, 64, 64))
+        dx = self.pos[0] - context.camera[0]
+        dy = self.pos[1] - context.camera[1]
+        context.dest.blit(self.sheet, (dx, dy), (src_x, 64, 64, 64))
         for index in range(1, 30):
-            dy = self.pos[1] - (64 * index)
-            dest.blit(self.sheet, (self.pos[0], dy), (src_x, 0, 64, 64))
+            dy = self.pos[1] - (64 * index) - context.camera[1]
+            context.dest.blit(self.sheet, (dx, dy), (src_x, 0, 64, 64))
             if dy < 0:
                 break
 
