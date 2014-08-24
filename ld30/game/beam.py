@@ -54,4 +54,5 @@ class Beam(BaseParticle):
                 self.die()
 
     def draw(self, context):
+        context.camera_shake(self.intensity / 2)
         self.animator.draw(context, self.x, self.y)

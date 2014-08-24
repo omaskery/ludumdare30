@@ -63,6 +63,7 @@ class World(object):
             choices.remove(chosen)
             x, y = chosen.pos
             chosen.blocked = True
+            print("marking tile at %s as blocked" % chosen.pos)
 
             totem = Totem(sheet, particles)
             totem.pos[0] = x * self.tile_size[0] + int(random.gauss(1, 2))
@@ -75,6 +76,7 @@ class World(object):
             choices.remove(chosen)
             x, y = chosen.pos
             chosen.blocked = True
+            print("marking tile at %s as blocked" % chosen.pos)
 
             pedestal = Pedestal(self.wind, sheet, particles)
             pedestal.pos[0] = x * self.tile_size[0] + int(random.gauss(0, 3))
@@ -85,6 +87,10 @@ class World(object):
         return self.tiles[y * self.size[0] + x]
 
     def set_tile_at(self, x, y, value):
+        if value is None:
+            print("removing tile at %s" % ((x, y),))
+        if self.tiles[y * self.size[0] + x] is None:
+            print("created tile at %s" % ((x, y),))
         self.tiles[y * self.size[0] + x] = value
         value.pos = [x, y]
 

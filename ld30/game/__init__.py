@@ -49,6 +49,7 @@ class Game(object):
 
         self.player = Player(self.dc, self.totem_sheet, self.particles)
         self.player.pos = random.choice([tile.pos for tile in self.world.valid_tiles if not tile.blocked])
+        print("spawning player in tile at %s" % self.player.pos)
         self.player.pos[0] *= self.world.tile_size[0]
         self.player.pos[1] *= self.world.tile_size[1]
         self.player.world = self.world
