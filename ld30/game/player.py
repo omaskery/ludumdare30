@@ -108,6 +108,8 @@ class Player(object):
             else:
                 self.proximity = 0
 
+        self.debug_pos.quick_set(self.pos)
+
     def check_detail_collision(self):
         test_x = self.pos[0] + self.vel[0]
         test_y = self.pos[1] + self.vel[1]

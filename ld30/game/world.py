@@ -22,7 +22,7 @@ class World(object):
     def __init__(self, sheet, particles):
         self.sheet = sheet
         self.particles = particles
-        self.size = (100, 30)
+        self.size = (30, 20)
         self.tiles = [None] * (self.size[0] * self.size[1])
         self.valid_tiles = []
         self.totems = []
@@ -46,13 +46,14 @@ class World(object):
 
                     tile_value = random.randint(0, 5)
 
-                    if x > 0 and random.random() <= 0.25:
+                    tile_chance = 0.25
+                    if x > 0 and random.random() <= tile_chance:
                         self.set_tile_at(x-1, y, Tile(tile_value, None))
-                    if x < (self.size[0]-1) and random.random() <= 0.25:
+                    if x < (self.size[0]-1) and random.random() <= tile_chance:
                         self.set_tile_at(x+1, y, Tile(tile_value, None))
-                    if y > 0 and random.random() <= 0.25:
+                    if y > 0 and random.random() <= tile_chance:
                         self.set_tile_at(x, y-1, Tile(tile_value, None))
-                    if y < (self.size[1]-1) and random.random() <= 0.25:
+                    if y < (self.size[1]-1) and random.random() <= tile_chance:
                         self.set_tile_at(x, y+1, Tile(tile_value, None))
 
         self.valid_tiles = [tile for tile in self.tiles if tile is not None]
@@ -66,7 +67,6 @@ class World(object):
             totem = Totem(sheet, particles)
             totem.pos[0] = x * self.tile_size[0] + int(random.gauss(1, 2))
             totem.pos[1] = y * self.tile_size[1] - 40 + int(random.gauss(0, 2))
-            chosen.object = totem
             self.totems.append(totem)
             self.details.append(totem)
 
@@ -79,7 +79,6 @@ class World(object):
             pedestal = Pedestal(self.wind, sheet, particles)
             pedestal.pos[0] = x * self.tile_size[0] + int(random.gauss(0, 3))
             pedestal.pos[1] = y * self.tile_size[1] - 40 + int(random.gauss(0, 2))
-            chosen.object = pedestal
             self.details.append(pedestal)
 
     def tile_at(self, x, y):
@@ -170,4 +169,3 @@ class Tile(object):
         self.value = value
         self.pos = pos
         self.blocked = False
-        self.object = None
