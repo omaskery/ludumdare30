@@ -70,15 +70,16 @@ class Player(object):
                 self.moving = True
                 self.animator.set_animation('walk_%s' % self.dir_string)
 
-        test_x, test_y = self.world_point()
-        test_x += self.vel[0]
-        test_y += self.vel[1]
-        new_tile_under = self.world.tile_at_pos(test_x, test_y)
-        if new_tile_under is not None and not self.check_detail_collision():
-            self.pos[0] += self.vel[0]
-            self.pos[1] += self.vel[1]
-        else:
-            self.vel = [0, 0]
+        if self.world is not None:
+            test_x, test_y = self.world_point()
+            test_x += self.vel[0]
+            test_y += self.vel[1]
+            new_tile_under = self.world.tile_at_pos(test_x, test_y)
+            if new_tile_under is not None and not self.check_detail_collision():
+                self.pos[0] += self.vel[0]
+                self.pos[1] += self.vel[1]
+            else:
+                self.vel = [0, 0]
         self.vel[0] *= self.friction
         self.vel[1] *= self.friction
 

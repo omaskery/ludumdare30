@@ -98,7 +98,8 @@ class World(object):
         tile_x = int(x / self.tile_size[0])
         tile_y = int(y / self.tile_size[1])
         if 0 <= tile_x < self.tile_size[0] and 0 <= tile_y < self.tile_size[1]:
-            return self.tile_at(tile_x, tile_y)
+            result = self.tile_at(tile_x, tile_y)
+            return result
         else:
             return None
 

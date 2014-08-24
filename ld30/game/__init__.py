@@ -47,11 +47,20 @@ class Game(object):
 
         self.world = World(self.totem_sheet, self.particles)
 
+        self.spawn_tile = random.choice([tile for tile in self.world.valid_tiles if not tile.blocked])
+        if self.spawn_tile is None:
+            print("spawned player in invalid tile")
+
         self.player = Player(self.dc, self.totem_sheet, self.particles)
-        self.player.pos = random.choice([tile.pos for tile in self.world.valid_tiles if not tile.blocked])
-        print("spawning player in tile at %s" % self.player.pos)
-        self.player.pos[0] *= self.world.tile_size[0]
-        self.player.pos[1] *= self.world.tile_size[1]
+        self.player.pos = [
+            self.spawn_tile.pos[0] * self.world.tile_size[0],
+            self.spawn_tile.pos[1] * self.world.tile_size[1] - 32
+        ]
+        print("spawning player in tile at %s, position: %s" % (self.spawn_tile.pos, self.player.pos))
+        test_x, test_y = self.player.world_point()
+        if self.world.tile_at_pos(test_x, test_y) is None:
+            print("world tile is null at player feet")
+
         self.player.world = self.world
 
         self.context = RenderContext(self.screen)
