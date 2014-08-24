@@ -89,6 +89,14 @@ class World(object):
         self.tiles[y * self.size[0] + x] = value
         value.pos = [x, y]
 
+    def tile_at_pos(self, x, y):
+        tile_x = int(x / self.tile_size[0])
+        tile_y = int(y / self.tile_size[1])
+        if 0 <= tile_x < self.tile_size[0] and 0 <= tile_y < self.tile_size[1]:
+            return self.tile_at(tile_x, tile_y)
+        else:
+            return None
+
     def think(self):
         self.wind.update()
 

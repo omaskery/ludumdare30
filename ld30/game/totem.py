@@ -19,10 +19,10 @@ class Totem(object):
     def think(self):
         x = self.pos[0]+32-2
         y = self.pos[1]+16
-        if random.random() <= (0.8 * self.intensity):
+        if random.random() <= (0.2 * self.intensity):
             particle = TotemParticle(self.sheet, x + random.gauss(0.0, 2.0), y, self.intensity)
             self.particles.add(particle)
-        if random.random() <= (0.2 * self.intensity):
+        if random.random() <= (0.05 * self.intensity):
             side_x = x
             if random.random() <= 0.5:
                 side_x -= 16

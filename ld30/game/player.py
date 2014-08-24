@@ -145,8 +145,15 @@ class Player(object):
                 self.moving = True
                 self.animator.set_animation('walk_%s' % self.dir_string)
 
-        self.pos[0] += self.vel[0]
-        self.pos[1] += self.vel[1]
+        test_x, test_y = self.world_point()
+        test_x += self.vel[0]
+        test_y += self.vel[1]
+        new_tile_under = self.world.tile_at_pos(test_x, test_y)
+        if new_tile_under is not None and not self.check_detail_collision():
+            self.pos[0] += self.vel[0]
+            self.pos[1] += self.vel[1]
+        else:
+            self.vel = [0, 0]
         self.vel[0] *= self.friction
         self.vel[1] *= self.friction
 
@@ -175,14 +182,17 @@ class Player(object):
                 self.proximity = sum(proximities) / len(proximities)
             else:
                 self.proximity = 0
-            for detail in self.world.details:
-                delta = [self.pos[0] - detail.pos[0], self.pos[1] - detail.pos[1]]
-                distance = math.hypot(delta[0], delta[1])
-                touch_radius = 20
-                normal_delta = [delta[0] / distance, delta[1] / distance]
-                if distance <= touch_radius:
-                    self.pos[0] += normal_delta[0]
-                    self.pos[1] += normal_delta[1]
+
+    def check_detail_collision(self):
+        test_x = self.pos[0] + self.vel[0]
+        test_y = self.pos[1] + self.vel[1]
+        for detail in self.world.details:
+            delta = [test_x - detail.pos[0], test_y - detail.pos[1]]
+            distance = math.hypot(delta[0], delta[1])
+            touch_radius = 20
+            if distance <= touch_radius:
+                return True
+        return False
 
     def done_coughing(self):
         self.animator.set_animation('idle_%s' % self.dir_string)
