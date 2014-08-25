@@ -110,8 +110,6 @@ class World(object):
     def think(self):
         self.wind.update()
 
-        for totem in self.totems:
-            totem.think()
         for detail in self.details:
             detail.think()
 
