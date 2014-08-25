@@ -50,7 +50,7 @@ class Animator(object):
         if callback is not None:
             self.callback = callback
 
-    def draw(self, context, x, y):
+    def draw(self, context, x, y, ignore_camera=False):
         if self.current is None:
             return
 
@@ -68,8 +68,12 @@ class Animator(object):
                     if self.current is None:
                         return
 
-        dx = x - context.camera[0]
-        dy = y - context.camera[1]
+        if not ignore_camera:
+            dx = x - context.camera[0]
+            dy = y - context.camera[1]
+        else:
+            dx = x
+            dy = y
         sprite_id = self.current.frames[self.index]
         if not self.current.flipped:
             area_x = int(sprite_id % self.width) * self.tile_size

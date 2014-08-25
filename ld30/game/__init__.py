@@ -2,6 +2,7 @@ __author__ = 'Oliver Maskery'
 
 
 from .render_context import RenderContext
+from .world_indicator import WorldBar
 from .particles import ParticleSystem
 from .player import Player
 from .world import World
@@ -45,9 +46,12 @@ class Game(object):
         self.totem_sheet = pygame.transform.scale2x(pygame.image.load('data/sprites/totem.png').convert_alpha())
         self.particles = ParticleSystem()
 
-        self.worlds = [World(self.totem_sheet, self.particles) for x in range(20)]
+        self.worlds = [World(self.totem_sheet, self.particles) for x in range(10)]
         self.world_index = 0
         self.world = None
+
+        self.world_bar = WorldBar(self.totem_sheet, len(self.worlds), [resolution[0]/2, resolution[1]-96], resolution[0] * 0.9)
+        self.world_bar.make_active(0)
 
         self.player = Player(self.dc, self.totem_sheet, self.particles)
         self.player.teleport_request = self.player_teleported
@@ -63,6 +67,7 @@ class Game(object):
             self.world_index = (self.world_index - 1) % len(self.worlds)
         print("player teleported at totem to world %s!" % self.world_index)
         self.change_world(self.worlds[self.world_index])
+        self.world_bar.make_active(self.world_index)
 
     def change_world(self, world):
         self.world = world
@@ -108,6 +113,8 @@ class Game(object):
         self.world.draw(self.context)
 
         self.particles.draw(self.context)
+
+        self.world_bar.draw(self.context)
 
     def run(self):
         screen = self.screen
