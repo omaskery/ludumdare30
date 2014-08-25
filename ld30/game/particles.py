@@ -14,6 +14,9 @@ class ParticleSystem(object):
     def add(self, particle):
         self.particles.append(particle)
 
+    def clear(self):
+        self.particles = []
+
     def think(self):
         for particle in self.particles:
             particle.update()
@@ -59,7 +62,10 @@ class TotemParticle(BaseParticle):
         self.base_x = self.x
         self.t = random.random() * 10.0
 
-        self.set_index(random.randint(0, 3), 0)
+        if random.random() <= self.intensity - 0.1:
+            self.set_index(random.randint(0, 3), 5)
+        else:
+            self.set_index(random.randint(0, 3), 0)
 
     def update(self):
         self.x = self.base_x + math.cos(self.t) * 1.5

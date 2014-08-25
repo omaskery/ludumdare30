@@ -7,7 +7,8 @@ import pygame
 
 class Animation(object):
 
-    def __init__(self, frames, loops, rate, flipped):
+    def __init__(self, name, frames, loops, rate, flipped):
+        self.name = name
         self.frames = frames
         self.loops = loops
         self.flipped = flipped
@@ -28,13 +29,21 @@ class Animator(object):
         self.callback = None
 
     def add_animation(self, name, frames, loop=False, rate=1.0, flipped=False):
-        anim = Animation(frames, loop, rate, flipped)
+        anim = Animation(name, frames, loop, rate, flipped)
         self.animations[name] = anim
         if self.current is None:
             self.current = anim
             self.next_frame = datetime.datetime.now() + anim.period
 
+    def current_name(self):
+        if self.current is not None:
+            return self.current.name
+        return ''
+
     def set_animation(self, name, callback=None):
+        if self.current is not None and self.current.name == name:
+            return
+
         self.current = self.animations[name]
         self.index = 0
         self.next_frame = datetime.datetime.now() + self.current.period

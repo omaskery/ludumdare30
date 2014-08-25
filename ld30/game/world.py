@@ -58,14 +58,16 @@ class World(object):
 
         self.valid_tiles = [tile for tile in self.tiles if tile is not None]
         choices = self.valid_tiles[0:]
-        while len(self.totems) < 3:
+        forward = False
+        while len(self.totems) < 2:
             chosen = random.choice(choices)
             choices.remove(chosen)
             x, y = chosen.pos
             chosen.blocked = True
             print("marking tile at %s as blocked" % chosen.pos)
 
-            totem = Totem(sheet, particles)
+            totem = Totem(sheet, particles, forward)
+            forward = not forward
             totem.pos[0] = x * self.tile_size[0] + int(random.gauss(1, 2))
             totem.pos[1] = y * self.tile_size[1] - 40 + int(random.gauss(0, 2))
             self.totems.append(totem)
@@ -82,6 +84,8 @@ class World(object):
             pedestal.pos[0] = x * self.tile_size[0] + int(random.gauss(0, 3))
             pedestal.pos[1] = y * self.tile_size[1] - 40 + int(random.gauss(0, 2))
             self.details.append(pedestal)
+
+        self.spawn_tile = random.choice([tile for tile in self.valid_tiles if not tile.blocked])
 
     def tile_at(self, x, y):
         return self.tiles[y * self.size[0] + x]

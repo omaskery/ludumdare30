@@ -45,25 +45,42 @@ class Game(object):
         self.totem_sheet = pygame.transform.scale2x(pygame.image.load('data/sprites/totem.png').convert_alpha())
         self.particles = ParticleSystem()
 
-        self.world = World(self.totem_sheet, self.particles)
-
-        self.spawn_tile = random.choice([tile for tile in self.world.valid_tiles if not tile.blocked])
-        if self.spawn_tile is None:
-            print("spawned player in invalid tile")
+        self.worlds = [World(self.totem_sheet, self.particles) for x in range(20)]
+        self.world_index = 0
+        self.world = None
 
         self.player = Player(self.dc, self.totem_sheet, self.particles)
+        self.player.teleport_request = self.player_teleported
+
+        self.context = RenderContext(self.screen)
+
+        self.change_world(self.worlds[self.world_index])
+
+    def player_teleported(self, totem):
+        if totem.direction:
+            self.world_index = (self.world_index + 1) % len(self.worlds)
+        else:
+            self.world_index = (self.world_index - 1) % len(self.worlds)
+        print("player teleported at totem to world %s!" % self.world_index)
+        self.change_world(self.worlds[self.world_index])
+
+    def change_world(self, world):
+        self.world = world
+        self.player.world = world
+        self.particles.clear()
+
+        if self.world.spawn_tile is None:
+            print("spawned player in invalid tile")
+
         self.player.pos = [
-            self.spawn_tile.pos[0] * self.world.tile_size[0],
-            self.spawn_tile.pos[1] * self.world.tile_size[1] - 32
+            self.world.spawn_tile.pos[0] * self.world.tile_size[0],
+            self.world.spawn_tile.pos[1] * self.world.tile_size[1] - 32
         ]
-        print("spawning player in tile at %s, position: %s" % (self.spawn_tile.pos, self.player.pos))
+        print("spawning player in tile at %s, position: %s" % (self.world.spawn_tile.pos, self.player.pos))
         test_x, test_y = self.player.world_point()
         if self.world.tile_at_pos(test_x, test_y) is None:
             print("world tile is null at player feet")
 
-        self.player.world = self.world
-
-        self.context = RenderContext(self.screen)
         self.context.focus_on(self.player.pos)
 
         for index in range(20):

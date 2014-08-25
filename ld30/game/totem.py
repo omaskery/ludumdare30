@@ -7,7 +7,8 @@ import random
 
 class Totem(object):
 
-    def __init__(self, sheet, particles):
+    def __init__(self, sheet, particles, direction):
+        self.direction = direction
         self.sheet = sheet
         self.particles = particles
         self.pos = [0, 0]
