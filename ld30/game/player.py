@@ -2,6 +2,7 @@ __author__ = 'Oliver Maskery'
 
 
 from .animator import Animator
+from .pedestal import Pedestal
 import datetime
 import random
 import pygame
@@ -26,6 +27,7 @@ class Player(object):
         kneel_frames = [5, 6, 7]
         kneel_rate = 2
         pray_frames = [7]
+        extinguish_frames = [36, 37, 38, 39]
         self.animator.add_animation('idle_right', idle_frames, True)
         self.animator.add_animation('idle_left', idle_frames, True, flipped=True)
         self.animator.add_animation('walk_right', walk_frames, True, rate=walk_rate)
@@ -36,6 +38,10 @@ class Player(object):
         self.animator.add_animation('kneel_left', kneel_frames, False, flipped=True, rate=kneel_rate)
         self.animator.add_animation('pray_right', pray_frames, True, rate=1)
         self.animator.add_animation('pray_left', pray_frames, True, flipped=True, rate=1)
+        self.animator.add_animation('extinguish_right', extinguish_frames, False, rate=3)
+        self.animator.add_animation('extinguish_left', extinguish_frames, False, flipped=True, rate=3)
+
+        self.animator.set_animation('pray_right')
 
         self.vel = [0, 0]
         self.friction = 0.8
@@ -94,15 +100,6 @@ class Player(object):
         self.vel[0] *= self.friction
         self.vel[1] *= self.friction
 
-        if self.moving:
-            movement_tolerance = 0.1
-            if abs(self.vel[0]) < movement_tolerance and abs(self.vel[1]) < movement_tolerance:
-                #print("stopping")
-                self.moving = False
-                self.animator.set_animation('idle_%s' % self.dir_string)
-        elif self.animator.current_name().startswith('idle_') and random.random() <= 0.001:
-            self.animator.set_animation('cough_%s' % self.dir_string, self.done_coughing)
-
         if self.world is not None:
             proximities = []
             near_totem_this_tick = False
@@ -142,7 +139,32 @@ class Player(object):
             else:
                 self.proximity = 0
 
+            for detail in self.world.details:
+                if not isinstance(detail, Pedestal):
+                    continue
+
+                distance = math.hypot(self.pos[0] - detail.pos[0], self.pos[1] - detail.pos[1])
+                sense_radius = 50.0
+
+                if distance < sense_radius and self.animator.current_name().startswith('idle_') and detail.lit:
+                    extinguish_done = lambda: self.done_extinguishing(detail)
+                    self.animator.set_animation('extinguish_%s' % self.dir_string, extinguish_done)
+                    break
+
+        if self.moving:
+            movement_tolerance = 0.1
+            if abs(self.vel[0]) < movement_tolerance and abs(self.vel[1]) < movement_tolerance:
+                #print("stopping")
+                self.moving = False
+                self.animator.set_animation('idle_%s' % self.dir_string)
+        elif self.animator.current_name().startswith('idle_') and random.random() <= 0.001:
+            self.animator.set_animation('cough_%s' % self.dir_string, self.done_coughing)
+
         self.debug_pos.quick_set(self.pos)
+
+    def done_extinguishing(self, pedestal):
+        pedestal.extinguish()
+        self.animator.set_animation('idle_%s' % self.dir_string)
 
     def praying_animation(self):
         anim = self.animator.current_name()
